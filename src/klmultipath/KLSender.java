@@ -219,7 +219,7 @@ public class KLSender {
 		cli_options.addOption("k", "k", true, "number of packets to send per transmission");
 		cli_options.addOption("l", "l", true, "number of packets that must be recieved");
 		cli_options.addOption("n", "numsamples", true, "number of transmission to make");
-		cli_options.addOption("i", "samplinginterval", true, "samplig interval");
+		//cli_options.addOption("i", "samplinginterval", true, "samplig interval");
 		cli_options.addOption("p", "path", true, "sender/reciever IP address pair in the form X.X.X.X:Y.Y.Y.Y");
 		cli_options.addOption("x", "crosstraffic", false, "sender for crosstraffic");
 		//cli_options.addOption(OptionBuilder.withLongOpt("queuetype").hasArgs().isRequired().withDescription("queue type and arguments").create("q"));

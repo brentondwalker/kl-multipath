@@ -47,6 +47,7 @@ public class KLReceiver {
 	BufferedWriter[] out = null;
 	boolean cross_trafic = false;
 	NanoSynchro ns = null;
+	int sampling_interval = 1;
 	
 	/**
 	 * Constructor
@@ -127,6 +128,7 @@ public class KLReceiver {
 			int threadnum = i;
 			String outfile = this.outfile_base+"_"+threadnum+".dat";
 			boolean xt = this.cross_trafic;
+			int sampling_interval = this.sampling_interval;
 			
 			Thread listener = new Thread() {
 				public void run() {
@@ -166,29 +168,41 @@ public class KLReceiver {
 							int count = BytePacker.getInteger(rxd, 28);
 
 							// write the data to the log file for this thread
-							StringJoiner sj = new StringJoiner("\t","","\n");
-							sj.add(String.format("%09d",count));
-							sj.add(String.format("%09d",seqnum));
-							sj.add(String.format("%09d",index));
-							sj.add(""+arrival);
-							sj.add(""+txtime);
-							sj.add(""+curtime);
-							sj.add(""+k);
-							sj.add(""+clock_offset);
+							if ((index % sampling_interval) == 0) {
+							    StringJoiner sj = new StringJoiner("\t","","\n");
+							    sj.add(String.format("%09d",count));
+							    sj.add(String.format("%09d",seqnum));
+							    sj.add(String.format("%09d",index));
+							    sj.add(""+arrival);
+							    sj.add(""+txtime);
+							    sj.add(""+curtime);
+							    sj.add(""+k);
+							    sj.add(""+clock_offset);
 
-							try {
-								out[threadnum].write(sj.toString());
-							} catch (IOException e) {
-								e.printStackTrace();
-								System.exit(1);
+							    try {
+							        out[threadnum].write(sj.toString());
+							    } catch (IOException e) {
+							        e.printStackTrace();
+							        System.exit(1);
+							    }
+							    //System.out.println("received in thread "+threadnum);
 							}
-							//System.out.println("received in thread "+threadnum);
 						}
 					}
 				}
 			};
 			listener.start();
 		}
+	}
+	
+	
+	/**
+	 * Set the sampling interval in terms of jobs.
+	 * 
+	 * @param interval
+	 */
+	public void setSamplingInterval(int interval) {
+	    this.sampling_interval = interval;
 	}
 	
 	
@@ -204,6 +218,7 @@ public class KLReceiver {
 		cli_options.addOption("x", "crosstraffic", false, "receiver for non-recorded crosstraffic");
 		cli_options.addOption("p", "path", true, "sender/reciever IP address pair in the form X.X.X.X:Y.Y.Y.Y");
 		cli_options.addOption("t", "time_sync_server", true, "IP address of the machine to try and sync nanoTime with");
+		cli_options.addOption("i", "samplinginterval", true, "samplig interval");
 		cli_options.addOption(OptionBuilder.withLongOpt("outfile").hasArg().isRequired().withDescription("the base name of the output files").create("o"));
 		
 		CommandLineParser parser = new GnuParser();
@@ -219,12 +234,16 @@ public class KLReceiver {
 
 		String paths[] = options.hasOption("p") ? options.getOptionValues("p") : null;
 		
+		String sampling_interval = options.hasOption("p") ? options.getOptionValue("i") : null;
+		
 		NanoSynchro ns = null;
 		if (options.hasOption("t")) {
 		    ns = new NanoSynchro(options.getOptionValue("t"));
 		}
 		
 		KLReceiver receiver = new KLReceiver(paths, options.getOptionValue("o"), options.hasOption("x"), ns);
+		
+		
 		
 		receiver.listen();
 		
